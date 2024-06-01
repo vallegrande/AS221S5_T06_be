@@ -21,6 +21,22 @@ public class HistoryController {
 
     @PostMapping("/save")
     public Mono<String> generateSpeech(@RequestBody String text) {
-        return historyServiceImpl.generateSpeech(text);
+        return historyServiceImpl.create(text);
     }
+
+    @PutMapping("/edit/{id}")
+    public Mono<History> editSpeech(@PathVariable Long id, @RequestBody String text) {
+        return historyServiceImpl.edit(id, text);
+    }
+
+    @PutMapping("/inactive/{id}")
+    public Mono<History> inactiveHistory(@PathVariable Long id) {
+        return historyServiceImpl.inactiveHistory(id);
+    }
+
+    @PutMapping("/active/{id}")
+    public Mono<History> activeHistory(@PathVariable Long id) {
+        return historyServiceImpl.activeHistory(id);
+    }
+
 }

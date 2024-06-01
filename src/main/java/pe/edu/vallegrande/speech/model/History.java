@@ -11,10 +11,13 @@ import org.springframework.data.relational.core.mapping.Table;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Table("History")
+@Table("history")
 public class History {
 
     @Id
     private Long id;
     private String text;
+    @Builder.Default
+    private String active = "A";
+
 }

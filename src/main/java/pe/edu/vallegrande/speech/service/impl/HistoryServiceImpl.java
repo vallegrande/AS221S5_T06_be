@@ -27,13 +27,13 @@ public class HistoryServiceImpl implements HistoryService {
     }
 
     @Override
-    public Mono<String> generateSpeech(String text) {
+    public Mono<String> create(String text) {
         return Mono.just(text)
                 .filter(t -> !t.isEmpty())
                 .flatMap(t -> {
                     try {
                         speechSynthesizer.SpeakTextAsync(t).get();
-                        History newText = new History(null, t);
+                        History newText = History.builder().text(t).build();
                         return historyRepository.save(newText)
                                 .thenReturn("Texto: [" + t + "] sintetizado correctamente.");
                     } catch (InterruptedException e) {
@@ -45,4 +45,26 @@ public class HistoryServiceImpl implements HistoryService {
                     }
                 });
     }
+
+    @Override
+    public Mono<History> edit(Long id, String text) {
+        return historyRepository.findById(id)
+                .flatMap(history -> {
+                    history.setText(text);
+                    return historyRepository.save(history);
+                });
+    }
+
+    @Override
+    public Mono<History> inactiveHistory(Long id) {
+        return historyRepository.inactiveHistory(id)
+                .flatMap(i -> historyRepository.findById(id));
+    }
+
+    @Override
+    public Mono<History> activeHistory(Long id) {
+        return historyRepository.activeHistory(id)
+                .flatMap(i -> historyRepository.findById(id));
+    }
+
 }
