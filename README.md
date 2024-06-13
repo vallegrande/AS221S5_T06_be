@@ -129,5 +129,34 @@ _Abre el archivo de configuración del proyecto application.yml y realiza la con
 
 _Una vez que hayas completado estos pasos, tu aplicación estará configurada para conectarse a la base de datos PostgreSQL en la nube en Railway._
 
+## DOCKERIZACIÓN DEL PROYECTO 🐳🚀
+_Para dockerizar este proyecto y desplegarlo en contenedores Docker, sigue estos pasos:_
+
+1. **Crear el archivo dockerfile**:
+
+   _Realizamos la respectiva configuracion de nuestro archivo_
+
+   ![configuracion](https://i.imgur.com/AuE7l8C.png)
+   
+3. **Construir la imagen Docker**:
+   
+   _Ejecuta el siguiente comando en el directorio raíz del proyecto para construir la imagen Docker:_
+   ```
+   docker build -t shirleyascencio/service-computer-vision:v1 .
+   ```
+4. **Ejecutar el contenedor Docker**:
+   
+    _Una vez que la imagen Docker se haya construido correctamente, puedes ejecutar un contenedor con el siguiente comando:_
+   ```
+   docker run -p 8085:8085 shirleyascencio/service-computer-vision:v1
+   ```
+6. **Publicarlo en docker Hub**:
+   
+   _Para publicarlo en el perfil de dockerhub, ejecutamos el siguiente comando:_
+   ```
+   docker push shirleyascencio/service-computer-vision:v1
+   ```
+   ![dockerhub](https://i.imgur.com/lSlwBEH.png)
+
 
 
