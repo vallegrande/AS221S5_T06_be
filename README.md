@@ -158,5 +158,10 @@ _Para dockerizar este proyecto y desplegarlo en contenedores Docker, sigue estos
    ```
    ![dockerhub](https://i.imgur.com/lSlwBEH.png)
 
+ **Probar servcicio cognitivo Computer Vision**:
+   
+  _Desarrollado en Angular:_
+  ![dockerhub](https://i.imgur.com/Q8AGpnF.png)
+
 
 
