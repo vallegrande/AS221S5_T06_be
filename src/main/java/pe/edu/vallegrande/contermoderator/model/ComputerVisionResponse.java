@@ -8,7 +8,7 @@ import org.springframework.data.relational.core.mapping.Column;
 import java.util.List;
 
 @Data
-@Table("computervisionresponse")
+@Table("computervision")
 public class ComputerVisionResponse {
     @Id
     private Long id;
@@ -38,4 +38,7 @@ public class ComputerVisionResponse {
 
     @Column("gore_score")
     private double goreScore;
+
+    @Column("status")
+    private String status;
 }

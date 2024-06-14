@@ -27,8 +27,33 @@ public class ComputerVisionRest {
         return visionService.getAll();
     }
 
+    @GetMapping("/list/A")
+    public Flux<ComputerVisionResponse> listA() {
+        return visionService.listA();
+    }
+
+    @GetMapping("/list/I")
+    public Flux<ComputerVisionResponse> listI() {
+        return visionService.listI();
+    }
+
     @PutMapping("/update/{id}")
     public Mono<ComputerVisionResponse> update(@PathVariable Long id, @RequestBody ComputerVisionDataUpdateDTO updatedResponse) {
         return visionService.update(id, updatedResponse);
     }
+    @DeleteMapping("/delete/{id}")
+    public Mono<Void> delete(@PathVariable Long id) {
+        return visionService.delete(id);
+    }
+
+    @PutMapping("/active/{id}")
+    public Mono<ComputerVisionResponse> active(@PathVariable Long id) {
+        return visionService.active(id);
+    }
+
+    @PutMapping("/inactive/{id}")
+    public Mono<ComputerVisionResponse> inactive(@PathVariable Long id) {
+        return visionService.inactive(id);
+    }
+
 }

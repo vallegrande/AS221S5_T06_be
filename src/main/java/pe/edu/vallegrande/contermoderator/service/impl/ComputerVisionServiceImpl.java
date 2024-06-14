@@ -82,6 +82,16 @@ public class ComputerVisionServiceImpl implements ComputerVisionService {
     }
 
     @Override
+    public Flux<ComputerVisionResponse> listA() {
+        return responseRepository.findAllByStatus("A");
+    }
+
+    @Override
+    public Flux<ComputerVisionResponse> listI() {
+        return responseRepository.findAllByStatus("I");
+    }
+
+    @Override
     public Mono<ComputerVisionResponse> update(Long id, ComputerVisionDataUpdateDTO updatedResponse) {
         return responseRepository.findById(id)
                 .flatMap(existingResponse -> {
@@ -89,6 +99,23 @@ public class ComputerVisionServiceImpl implements ComputerVisionService {
                     existingResponse.setTags(updatedResponse.getTags());
                     return responseRepository.save(existingResponse);
                 });
+    }
+
+    @Override
+    public Mono<Void> delete(Long id) {
+        return responseRepository.delete(id);
+    }
+
+    @Override
+    public Mono<ComputerVisionResponse> active(Long id) {
+        responseRepository.findById(id);
+        return responseRepository.active(id);
+    }
+
+    @Override
+    public Mono<ComputerVisionResponse> inactive(Long id) {
+        responseRepository.findById(id);
+        return responseRepository.inactive(id);
     }
 
 }

@@ -10,7 +10,16 @@ public interface ComputerVisionService {
 
     Flux<ComputerVisionResponse> getAll();
 
+    Flux<ComputerVisionResponse> listA();
+
+    Flux<ComputerVisionResponse> listI();
+
     Mono<ComputerVisionResponse> update(Long id, ComputerVisionDataUpdateDTO updatedResponse);
-    //Mono<Void> delete(Long id);
+
+    Mono<Void> delete(Long id);
+
+    Mono<ComputerVisionResponse> active(Long id);
+
+    Mono<ComputerVisionResponse> inactive(Long id);
 
 }
