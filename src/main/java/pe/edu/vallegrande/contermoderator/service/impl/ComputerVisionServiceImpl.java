@@ -32,48 +32,8 @@ public class ComputerVisionServiceImpl implements ComputerVisionService {
 
     @Override
     public Mono<ComputerVisionResponse> save(String imageUrl) {
-        try {
-            OkHttpClient client = new OkHttpClient().newBuilder().build();
-            MediaType mediaType = MediaType.parse("application/json");
-            RequestBody body = RequestBody.create(mediaType, "{\n  \"url\": \"" + imageUrl + "\"\n}\n");
-            Request request = new Request.Builder()
-                    .url(COMPUTER_VISION_URL)
-                    .method("POST", body)
-                    .addHeader("Ocp-Apim-Subscription-Key", COMPUTER_VISION_KEY)
-                    .addHeader("Content-Type", "application/json")
-                    .build();
-
-            Response response = client.newCall(request).execute();
-            if (!response.isSuccessful()) {
-                throw new IOException("Unexpected code " + response);
-            }
-
-            JSONObject jsonObject = new JSONObject(response.body().string());
-            ComputerVisionResponse computerVisionResponse = new ComputerVisionResponse();
-
-            computerVisionResponse.setDescription(jsonObject.getJSONObject("description").getJSONArray("captions").getJSONObject(0).getString("text"));
-
-            JSONArray tagsArray = jsonObject.getJSONObject("description").getJSONArray("tags");
-            List<String> tags = IntStream.range(0, tagsArray.length())
-                    .mapToObj(tagsArray::getString)
-                    .collect(Collectors.toList());
-            computerVisionResponse.setTags(tags);
-
-
-            JSONObject adultObject = jsonObject.getJSONObject("adult");
-            computerVisionResponse.setAdultContent(adultObject.getBoolean("isAdultContent"));
-            computerVisionResponse.setRacyContent(adultObject.getBoolean("isRacyContent"));
-            computerVisionResponse.setGoryContent(adultObject.getBoolean("isGoryContent"));
-            computerVisionResponse.setAdultScore(adultObject.getDouble("adultScore"));
-            computerVisionResponse.setRacyScore(adultObject.getDouble("racyScore"));
-            computerVisionResponse.setGoreScore(adultObject.getDouble("goreScore"));
-
-            computerVisionResponse.setImageUrl(imageUrl);
-
-            return responseRepository.save(computerVisionResponse);
-        } catch (IOException e) {
-            throw new RuntimeException("Error en la solicitud HTTP", e);
-        }
+        return callComputerVisionAPI(imageUrl)
+                .flatMap(responseRepository::save);
     }
 
     @Override
@@ -95,9 +55,26 @@ public class ComputerVisionServiceImpl implements ComputerVisionService {
     public Mono<ComputerVisionResponse> update(Long id, ComputerVisionDataUpdateDTO updatedResponse) {
         return responseRepository.findById(id)
                 .flatMap(existingResponse -> {
-                    existingResponse.setDescription(updatedResponse.getDescription());
-                    existingResponse.setTags(updatedResponse.getTags());
-                    return responseRepository.save(existingResponse);
+                    if (!existingResponse.getImageUrl().equals(updatedResponse.getImageUrl())) {
+                        // Llamar al servicio de visión por computadora con la nueva URL
+                        return callComputerVisionAPI(updatedResponse.getImageUrl())
+                                .flatMap(apiResponse -> {
+                                    // Actualizar los campos con la nueva información de la API
+                                    existingResponse.setDescription(apiResponse.getDescription());
+                                    existingResponse.setTags(apiResponse.getTags());
+                                    existingResponse.setAdultContent(apiResponse.isAdultContent());
+                                    existingResponse.setRacyContent(apiResponse.isRacyContent());
+                                    existingResponse.setGoryContent(apiResponse.isGoryContent());
+                                    existingResponse.setAdultScore(apiResponse.getAdultScore());
+                                    existingResponse.setRacyScore(apiResponse.getRacyScore());
+                                    existingResponse.setGoreScore(apiResponse.getGoreScore());
+                                    existingResponse.setImageUrl(updatedResponse.getImageUrl());
+                                    return responseRepository.save(existingResponse);
+                                });
+                    } else {
+                        // Si la URL no cambia, solo guarda la entidad existente
+                        return responseRepository.save(existingResponse);
+                    }
                 });
     }
 
@@ -108,14 +85,66 @@ public class ComputerVisionServiceImpl implements ComputerVisionService {
 
     @Override
     public Mono<ComputerVisionResponse> active(Long id) {
-        responseRepository.findById(id);
-        return responseRepository.active(id);
+        return responseRepository.findById(id)
+                .flatMap(existingResponse -> {
+                    existingResponse.setStatus("A");
+                    return responseRepository.save(existingResponse);
+                });
     }
 
     @Override
     public Mono<ComputerVisionResponse> inactive(Long id) {
-        responseRepository.findById(id);
-        return responseRepository.inactive(id);
+        return responseRepository.findById(id)
+                .flatMap(existingResponse -> {
+                    existingResponse.setStatus("I");
+                    return responseRepository.save(existingResponse);
+                });
     }
 
+    private Mono<ComputerVisionResponse> callComputerVisionAPI(String imageUrl) {
+        return Mono.create(sink -> {
+            try {
+                OkHttpClient client = new OkHttpClient().newBuilder().build();
+                MediaType mediaType = MediaType.parse("application/json");
+                RequestBody body = RequestBody.create(mediaType, "{\n  \"url\": \"" + imageUrl + "\"\n}\n");
+                Request request = new Request.Builder()
+                        .url(COMPUTER_VISION_URL)
+                        .method("POST", body)
+                        .addHeader("Ocp-Apim-Subscription-Key", COMPUTER_VISION_KEY)
+                        .addHeader("Content-Type", "application/json")
+                        .build();
+
+                Response response = client.newCall(request).execute();
+                if (!response.isSuccessful()) {
+                    sink.error(new IOException("Unexpected code " + response));
+                    return;
+                }
+
+                JSONObject jsonObject = new JSONObject(response.body().string());
+                ComputerVisionResponse computerVisionResponse = new ComputerVisionResponse();
+
+                computerVisionResponse.setDescription(jsonObject.getJSONObject("description").getJSONArray("captions").getJSONObject(0).getString("text"));
+
+                JSONArray tagsArray = jsonObject.getJSONObject("description").getJSONArray("tags");
+                List<String> tags = IntStream.range(0, tagsArray.length())
+                        .mapToObj(tagsArray::getString)
+                        .collect(Collectors.toList());
+                computerVisionResponse.setTags(tags);
+
+                JSONObject adultObject = jsonObject.getJSONObject("adult");
+                computerVisionResponse.setAdultContent(adultObject.getBoolean("isAdultContent"));
+                computerVisionResponse.setRacyContent(adultObject.getBoolean("isRacyContent"));
+                computerVisionResponse.setGoryContent(adultObject.getBoolean("isGoryContent"));
+                computerVisionResponse.setAdultScore(adultObject.getDouble("adultScore"));
+                computerVisionResponse.setRacyScore(adultObject.getDouble("racyScore"));
+                computerVisionResponse.setGoreScore(adultObject.getDouble("goreScore"));
+
+                computerVisionResponse.setImageUrl(imageUrl);
+
+                sink.success(computerVisionResponse);
+            } catch (IOException e) {
+                sink.error(new RuntimeException("Error en la solicitud HTTP", e));
+            }
+        });
+    }
 }
